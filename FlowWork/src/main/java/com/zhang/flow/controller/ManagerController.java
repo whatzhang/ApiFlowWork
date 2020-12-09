@@ -20,42 +20,50 @@ import java.util.List;
  */
 @Slf4j
 @RestController
+@RequestMapping("/flowzhang")
 public class ManagerController {
 
     @Resource
     private FlowService flowService;
 
     @GetMapping("/list")
+    @ResponseBody
     public ResultVO list() {
         return flowService.list();
     }
 
     @PostMapping("/order")
+    @ResponseBody
     public ResultVO order(@RequestBody List<String> ids) {
         return flowService.order(ids);
     }
 
     @GetMapping("/start")
+    @ResponseBody
     public ResultVO start() {
         return flowService.start();
     }
 
     @GetMapping("/end")
+    @ResponseBody
     public ResultVO end() {
         return flowService.end();
     }
 
-    @GetMapping("/export")
-    public void export(HttpServletResponse response) throws IOException {
-        flowService.export(response);
+    @GetMapping("/export/{type}")
+    @ResponseBody
+    public void export(HttpServletResponse response,@PathVariable("type") String type) throws IOException {
+        flowService.export(response,type);
     }
 
     @PostMapping("/import")
+    @ResponseBody
     public ResultVO importFile(@RequestParam MultipartFile file) throws IOException {
        return  flowService.importFile(file);
     }
 
     @GetMapping("/execute")
+    @ResponseBody
     public ResultVO execute(@RequestBody @Valid ParamVO paramVO) {
         return flowService.execute(paramVO);
     }

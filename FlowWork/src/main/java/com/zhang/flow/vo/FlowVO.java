@@ -2,7 +2,9 @@ package com.zhang.flow.vo;
 
 import com.alibaba.excel.annotation.ExcelIgnore;
 import com.alibaba.excel.annotation.ExcelProperty;
+import com.alibaba.excel.annotation.write.style.ColumnWidth;
 import com.alibaba.excel.annotation.write.style.HeadStyle;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -19,6 +21,8 @@ import java.util.Map;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
+@JsonInclude(JsonInclude.Include.NON_NULL)
+@ColumnWidth(50)
 @HeadStyle(fillPatternType = FillPatternType.SOLID_FOREGROUND, fillForegroundColor = 40)
 public class FlowVO implements Serializable {
     @ExcelIgnore
@@ -27,6 +31,8 @@ public class FlowVO implements Serializable {
     private Long order;
     @ExcelProperty("请求URL")
     private String url;
+    @ExcelProperty("请求URI")
+    private String uri;
     @ExcelProperty("请求方法(method)")
     private String method;
     @ExcelProperty("请求类型(ContentType)")

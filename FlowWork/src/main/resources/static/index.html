@@ -1,0 +1,403 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+    <script src="https://cdn.bootcss.com/vue/2.6.11/vue.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+    <title>api流测试</title>
+</head>
+<body>
+<div id="index">
+    <el-backtop target='.topNav' :right='50' :bottom='80' visibility-height='80'>
+        <el-button type="danger">TOP</el-button>
+    </el-backtop>
+    <el-container>
+        <el-header style="margin-top: 2em">
+            <el-switch
+                    style="display: block;width: 10em;margin-top: 6px;margin-left: 1em;float: left"
+                    v-model="isStart"
+                    active-color="#13ce66"
+                    inactive-color="#ff4949"
+                    active-text="结束"
+                    inactive-text="开始">
+            </el-switch>
+            <el-dropdown trigger="click" @command="batchOperate" style="float: left">
+                <el-button type="primary" >下载</el-button>
+                <el-dropdown-menu slot="dropdown">
+                    <el-dropdown-item command="exportFile">下载所有</el-dropdown-item>
+                    <el-dropdown-item command="exportFileApi">下载flowApi</el-dropdown-item>
+                </el-dropdown-menu>
+            </el-dropdown>
+
+            <el-button type="primary" @click="dialogVisible = true" style="margin-left: 2em;float: left">上传API
+            </el-button>
+
+            <el-input placeholder="请输入请求地址" style="width: 40em;margin-left: 2em;float: left" v-model="requestPath">
+                <template slot="prepend">Http://</template>
+            </el-input>
+        </el-header>
+        <el-main class="topNav">
+            <template>
+                <el-button type="primary" plain @click="clearFilter">清除所有过滤器</el-button>
+                <el-table ref="filterTable" :data="tableData" :row-class-name="tableRowClassName" style="width: 100%"
+                          @selection-change="tableSelected">
+                    <el-table-column
+                            type="selection"
+                            width="50">
+                    </el-table-column>
+                    <el-table-column prop="order" label="顺序ID" sortable width="60"
+                                     column-key="order"></el-table-column>
+                    <el-table-column prop="url" label="请求URL" sortable width="140" column-key="url"
+                                     :show-overflow-tooltip='true'></el-table-column>
+                    <el-table-column prop="uri" label="请求URI" sortable width="140" column-key="uri"></el-table-column>
+                    <el-table-column prop="method" label="请求方法" sortable width="80" column-key="method"
+                                     :filters="[{ text: 'GET', value: 'GET' },
+                                     { text: 'POST', value: 'POST' },
+                                     { text: 'PUT', value: 'PUT' },
+                                     { text: 'DELETE', value: 'DELETE' }]"
+                                     :filter-method="filterValue">
+                    </el-table-column>
+                    <el-table-column prop="reqContentType" label="请求类型" sortable width="140"
+                                     column-key="reqContentType"></el-table-column>
+                    <el-table-column prop="headerMap" label="请求头" sortable width="180"
+                                     :show-overflow-tooltip='true'
+                                     :formatter="formatterJson"
+                                     column-key="headerMap">
+                    </el-table-column>
+                    <el-table-column prop="paramMap" label="请求表单参数" sortable width="180"
+                                     :formatter="formatterJson"
+                                     :show-overflow-tooltip='true'
+                                     column-key="paramMap"></el-table-column>
+                    <el-table-column prop="queryParam" label="请求参数" sortable width="180"
+                                     :formatter="formatterJson"
+                                     :show-overflow-tooltip='true'
+                                     column-key="queryParam"></el-table-column>
+                    <el-table-column prop="requestBody" label="请求Body" sortable width="180"
+                                     :show-overflow-tooltip='true'
+                                     :formatter="formatterJson"
+                                     column-key="requestBody"></el-table-column>
+                    <el-table-column prop="httpStatus" label="响应码" sortable width="120" column-key="httpStatus"
+                                     :filter-method="filterValue"
+                                     filter-placement="bottom-end">
+                        <template slot-scope="scope">
+                            <el-tag :type="scope.row.httpStatus < 500 ? 'primary' : 'success'" disable-transitions>
+                                {{scope.row.httpStatus}}
+                            </el-tag>
+                        </template>
+                    </el-table-column>
+                    <el-table-column prop="responseBody" label="响应Body" sortable width="180"
+                                     :show-overflow-tooltip='true'
+                                     :formatter="formatterJson"
+                                     column-key="responseBody"></el-table-column>
+                    <el-table-column prop="respContentType" label="响应类型" sortable width="180"
+                                     column-key="respContentType"></el-table-column>
+                </el-table>
+            </template>
+        </el-main>
+    </el-container>
+    <el-dialog title="上传" :visible.sync="dialogVisible" width="400px">
+        <div style="text-align: center;vertical-align: middle">
+            <el-upload class='image-uploader' :multiple='false' :auto-upload='true' list-type='text'
+                       :show-file-list='true'
+                       :before-upload="beforeUpload" :drag='true' action='' :limit="1" :on-exceed="handleExceed"
+                       :http-request="uploadFile">
+                <i class="el-icon-upload"></i>
+                <div class="el-upload__text">将文件拖到此处，或<em>点击上传</em></div>
+                <div class="el-upload__tip" slot="tip">一次只能上传一个文件，仅限Excel格式，单文件不超过10MB</div>
+            </el-upload>
+        </div>
+        <span slot="footer" class="dialog-footer">
+            <el-button @click="dialogVisible = false">取 消</el-button>
+            <el-button type="primary" @click="dialogVisible = false">确 定</el-button>
+        </span>
+    </el-dialog>
+</div>
+<script>
+    const api = axios.create({
+        responseType: 'json',
+        withCredentials: true,
+    });
+    const indexVue = new Vue({
+        el: '#index',
+        data: {
+            selectedIds: [],
+            dialogVisible: false,
+            requestPath: '',
+            isStart: true,
+            tableData: [],
+            multipleSelection: []
+        },
+        created: function () {
+            this.initTbl()
+        },
+        computed: {},
+        methods: {
+            initTbl: function () {
+                api.get('/flowzhang/list')
+                    .then(function (response) {
+                        if (response.status == 200 && response.data.code == '200') {
+                            indexVue.tableData = response.data.data;
+                        }
+                    })
+                    .catch(function (error) {
+                        indexVue.$notify.error({
+                            title: '错误',
+                            message: '获取列表失败'
+                        });
+                    })
+            },
+            start: function () {
+                api.get('/flowzhang/start')
+                    .then(function (response) {
+                        if (response.success) {
+                            indexVue.$notify.success({
+                                title: '成功',
+                                message: '开始成功'
+                            });
+                        }
+                    })
+                    .catch(function (error) {
+                        indexVue.$notify.error({
+                            title: '错误',
+                            message: '开始失败'
+                        });
+                    })
+            },
+            end: function () {
+                api.get('/flowzhang/end')
+                    .then(function (response) {
+                        if (response.success) {
+                            indexVue.$notify.success({
+                                title: '成功',
+                                message: '结束成功'
+                            });
+                        }
+                    })
+                    .catch(function (error) {
+                        indexVue.$notify.error({
+                            title: '错误',
+                            message: '结束失败'
+                        });
+                        console.log(error);
+                    })
+            },
+            order: function () {
+                api.post('/flowzhang/order', JSON.stringify(this.selectedIds))
+                    .then(function (response) {
+                        if (response.success) {
+                            indexVue.table = response.data.data;
+                        }
+                    })
+                    .catch(function (error) {
+                        indexVue.$notify.error({
+                            title: '错误',
+                            message: '这是一条错误的提示消息'
+                        });
+                    })
+            },
+            batchOperate: function (command) {debugger
+                switch (command) {
+                    case "exportFile":
+                        this.exportFile();
+                        break;
+                    case "exportFileApi":
+                        this.exportFileApi();
+                        break;
+                }
+            },
+            exportFile: function () {
+                window.location.href = '/flowzhang/export/1';
+            },
+            exportFileApi: function () {
+                window.location.href = '/flowzhang/export/0';
+            },
+            execute: function () {
+                api.post('/flowzhang/order', JSON.stringify(this.selectedIds))
+                    .then(function (response) {
+                        if (response.success) {
+                            indexVue.table = response.data.data;
+                        }
+                    })
+                    .catch(function (error) {
+                        indexVue.$notify.error({
+                            title: '错误',
+                            message: '选取错误'
+                        });
+                        console.log(error);
+                    })
+            },
+            beforeUpload: function (file) {
+                let hz = file.name.split(".")[1]
+                if (hz != 'xlsx' && hz != 'xls') {
+                    return false;
+                }
+            },
+            handleExceed: function (files, fileList) {
+                indexVue.$notify({
+                    title: '警告',
+                    message: '当前限制选择1个文件，请删除后继续上传',
+                    type: 'warning'
+                });
+            },
+            uploadFile: function (item) {
+                let fileObj = item.file
+                const form = new FormData()
+                form.append('file', fileObj)
+                api.post('/flowzhang/import', form, {
+                    headers: {'Content-Type': 'multipart/form-data'}
+                }).then(res => {
+                    indexVue.$notify({
+                        title: '成功',
+                        message: '这是一条成功的提示消息',
+                        type: 'success'
+                    });
+                }).catch(function (error) {
+                    indexVue.$notify.error({
+                        title: '错误',
+                        message: '这是一条错误的提示消息'
+                    });
+                })
+            },
+            clearFilter: function () {
+                indexVue.$refs.filterTable.clearFilter();
+            },
+            formatterJson: function (row, col) {
+                debugger
+                let name = col.property;
+                if (name == 'headerMap') {
+                    return row.headerMap == undefined || row.headerMap == {} ? '' : JSON.stringify(row.headerMap, undefined, 5)
+                } else if (name == 'paramMap') {
+                    return row.paramMap == undefined || row.paramMap == {} ? '' : JSON.stringify(row.paramMap, undefined, 5)
+                } else if (name == 'queryParam') {
+                    return row.queryParam == undefined || row.queryParam == {} ? '' : JSON.stringify(row.queryParam, undefined, 5)
+                } else if (name == 'requestBody') {
+                    return row.requestBody == undefined || row.requestBody == '' ? '' : JSON.stringify(JSON.parse(row.requestBody, undefined, 5))
+                } else if (name == 'responseBody') {
+                    return row.responseBody == undefined || row.responseBody == '' ? '' : JSON.stringify(JSON.parse(row.responseBody, undefined, 5))
+                }
+            },
+            filterValue: function (value, row) {
+                return row.tag === value;
+            },
+            tableSelected: function (val) {
+                for (let item of val) {
+                    this.selectedIds.push(item.id)
+                }
+            },
+            tableRowClassName: function ({row, rowIndex}) {
+                if (row.httpStatus == 500) {
+                    return 'warning-row';
+                }
+                //  else if (row.httpStatus == 200) {
+                //     return 'success-row';
+                // }
+                return '';
+            }
+        },
+        watch: {
+            isStart(val) {
+                if (val) {
+                    this.start();
+                } else {
+                    this.end();
+                }
+            }
+        }
+    })
+
+    function syntaxHighlight(json) {
+        if (typeof json != 'string') {
+            json = JSON.stringify(json, undefined, 2);
+
+        }
+        json = json.replace(/&/g, '&').replace(/</g, '<').replace(/>/g, '>');
+        return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+            var cls = 'number';
+            if (/^"/.test(match)) {
+                if (/:$/.test(match)) {
+                    cls = 'key';
+                } else {
+                    cls = 'string';
+                }
+            } else if (/true|false/.test(match)) {
+                cls = 'boolean';
+            } else if (/null/.test(match)) {
+                cls = 'null';
+            }
+            return '<span class="' + cls + '">' + match + '</span>';
+        });
+    }
+
+    function formatJson(txt, compress) {
+        var indentChar = '    ';
+        if (/^\s*$/.test(txt)) {
+            alert('数据为空,无法格式化! ');
+            return;
+        }
+        try {
+            var data = eval('(' + txt + ')');
+        } catch (e) {
+            alert('数据源语法错误,格式化失败! 错误信息: ' + e.description, 'err');
+            return;
+        }
+        var draw = [], last = false, This = this, line = compress ? '' : '\n', nodeCount = 0, maxDepth = 0;
+        var notify = function (name, value, isLast, indent/*缩进*/, formObj) {
+            nodeCount++;/*节点计数*/
+            for (var i = 0, tab = ''; i < indent; i++) tab += indentChar;/* 缩进HTML */
+            tab = compress ? '' : tab;/*压缩模式忽略缩进*/
+            maxDepth = ++indent;/*缩进递增并记录*/
+            if (value && value.constructor == Array) {/*处理数组*/
+                draw.push(tab + (formObj ? ('"' + name + '":') : '') + '[' + line);/*缩进'[' 然后换行*/
+                for (var i = 0; i < value.length; i++)
+                    notify(i, value[i], i == value.length - 1, indent, false);
+                draw.push(tab + ']' + (isLast ? line : (',' + line)));/*缩进']'换行,若非尾元素则添加逗号*/
+            } else if (value && typeof value == 'object') {/*处理对象*/
+                draw.push(tab + (formObj ? ('"' + name + '":') : '') + '{' + line);/*缩进'{' 然后换行*/
+                var len = 0, i = 0;
+                for (var key in value) len++;
+                for (var key in value) notify(key, value[key], ++i == len, indent, true);
+                draw.push(tab + '}' + (isLast ? line : (',' + line)));/*缩进'}'换行,若非尾元素则添加逗号*/
+            } else {
+                if (typeof value == 'string') value = '"' + value + '"';
+                draw.push(tab + (formObj ? ('"' + name + '":') : '') + value + (isLast ? '' : ',') + line);
+            }
+            ;
+        };
+        var isLast = true, indent = 0;
+        notify('', data, isLast, indent, false);
+        return draw.join('');
+    }
+</script>
+<style>
+    .topNav {
+        height: 85vh;
+        overflow: hidden;
+        overflow-x: hidden;
+        overflow-y: scroll;
+    }
+
+    .el-tooltip__popper {
+        max-width: 50%;
+        min-height: 15%;
+        font-size: 0.85em;
+    }
+
+    .el-tooltip__popper, .el-tooltip__popper.is-dark {
+        background: #f5f5f5 !important;
+        color: #303133 !important;
+    }
+
+    .el-table .warning-row {
+        background: oldlace;
+    }
+
+    .el-table .success-row {
+        background: #f0f9eb;
+    }
+</style>
+</body>
+</html>

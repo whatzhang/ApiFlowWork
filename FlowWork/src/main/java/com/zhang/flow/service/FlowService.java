@@ -20,7 +20,7 @@ public interface FlowService {
 
     ResultVO end();
 
-    void export(HttpServletResponse response) throws IOException;
+    void export(HttpServletResponse response, String type) throws IOException;
 
     ResultVO execute(ParamVO paramVO);
 

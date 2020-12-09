@@ -3,12 +3,11 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
-        <artifactId>flow</artifactId>
-        <groupId>com.zhang</groupId>
+        <artifactId>dsp-kernel</artifactId>
+        <groupId>com.chinadaas.platform</groupId>
         <version>0.0.1-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
-
     <artifactId>FlowWork</artifactId>
     <dependencies>
         <dependency>
@@ -40,6 +39,21 @@
             <groupId>org.hibernate.validator</groupId>
             <artifactId>hibernate-validator</artifactId>
             <version>6.1.6.Final</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-ooxml</artifactId>
+            <version>3.17</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-ooxml-schemas</artifactId>
+            <version>3.17</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi</artifactId>
+            <version>3.17</version>
         </dependency>
     </dependencies>
 </project>

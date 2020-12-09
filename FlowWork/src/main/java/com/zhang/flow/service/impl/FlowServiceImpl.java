@@ -2,6 +2,8 @@ package com.zhang.flow.service.impl;
 
 import cn.hutool.http.ContentType;
 import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.support.ExcelTypeEnum;
+import com.github.benmanes.caffeine.cache.Cache;
 import com.zhang.flow.cache.FlowCache;
 import com.zhang.flow.service.FlowService;
 import com.zhang.flow.vo.FlowVO;
@@ -9,6 +11,9 @@ import com.zhang.flow.vo.ParamVO;
 import com.zhang.flow.vo.ResultVO;
 import okhttp3.*;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -22,6 +27,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * @author zhang
  */
+@Service
 public class FlowServiceImpl implements FlowService {
 
     private static OkHttpClient CLIENT = new OkHttpClient().newBuilder()
@@ -30,16 +36,20 @@ public class FlowServiceImpl implements FlowService {
             .writeTimeout(10, TimeUnit.SECONDS)
             .build();
 
+    @Qualifier("flowCache")
+    @Autowired
+    Cache<String, FlowVO> flowCache;
+
     @Override
     public ResultVO list() {
-        return new ResultVO("200", "success", FlowCache.FLOW_CACHE.asMap().values());
+        return new ResultVO("200", "success", flowCache.asMap().values());
     }
 
     @Override
     public ResultVO order(List<String> ids) {
         Assert.notEmpty(ids, "接口id不能为空");
         for (int i = 0; i < ids.size(); i++) {
-            FlowVO vo = FlowCache.FLOW_CACHE.getIfPresent(ids.get(i));
+            FlowVO vo = flowCache.getIfPresent(ids.get(i));
             if (Objects.nonNull(vo)) {
                 FlowCache.ORDER_FLOW_CACHE.put(Long.valueOf(i), vo);
             }
@@ -49,7 +59,7 @@ public class FlowServiceImpl implements FlowService {
 
     @Override
     public ResultVO start() {
-        FlowCache.FLOW_CACHE.cleanUp();
+        flowCache.cleanUp();
         FlowCache.ORDER_FLOW_CACHE.clear();
         return new ResultVO("200", "success", null);
     }
@@ -61,13 +71,24 @@ public class FlowServiceImpl implements FlowService {
     }
 
     @Override
-    public void export(HttpServletResponse response) throws IOException {
+    public void export(HttpServletResponse response, String type) throws IOException {
         try {
             response.setContentType("application/vnd.ms-excel");
             response.setCharacterEncoding(StandardCharsets.UTF_8.name());
-            response.setHeader("Content-disposition", "attachment;filename*=utf-8''api流程测试.xlsx");
-            EasyExcel.write(response.getOutputStream(), FlowVO.class).sheet("api数据").doWrite(Collections.singletonList(FlowCache.ORDER_FLOW_CACHE.values()));
+            response.setHeader("Content-disposition", "attachment;filename*=utf-8''apiFlow.xlsx");
+            List<FlowVO> list = new ArrayList<>();
+            if ("1".equals(type)) {
+                flowCache.asMap().values().forEach(o -> {
+                    list.add(o);
+                });
+            } else {
+                FlowCache.ORDER_FLOW_CACHE.values().forEach(o -> {
+                    list.add(o);
+                });
+            }
+            EasyExcel.write(response.getOutputStream(), FlowVO.class).excelType(ExcelTypeEnum.XLSX).sheet(0, "api数据").doWrite(list);
         } catch (Exception e) {
+            e.printStackTrace();
             response.reset();
             response.setContentType("application/json");
             response.setCharacterEncoding(StandardCharsets.UTF_8.name());
@@ -77,7 +98,7 @@ public class FlowServiceImpl implements FlowService {
 
     @Override
     public ResultVO importFile(MultipartFile file) throws IOException {
-        EasyExcel.read(file.getInputStream(), FlowVO.class, new ImportDataListener()).sheet().doRead();
+        EasyExcel.read(file.getInputStream(), FlowVO.class, new ImportDataListener()).sheet().headRowNumber(1).doRead();
         return new ResultVO("200", "success", null);
     }
 
