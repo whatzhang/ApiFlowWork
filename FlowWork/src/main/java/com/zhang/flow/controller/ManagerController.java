@@ -5,6 +5,7 @@ import com.zhang.flow.service.FlowService;
 import com.zhang.flow.vo.ParamVO;
 import com.zhang.flow.vo.ResultVO;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -25,6 +26,12 @@ public class ManagerController {
 
     @Resource
     private FlowService flowService;
+
+    @DeleteMapping("/delete/{isOrder}")
+    @ResponseBody
+    public ResultVO delete(@PathVariable boolean isOrder) {
+        return flowService.delete(isOrder);
+    }
 
     @GetMapping("/list")
     @ResponseBody
@@ -52,17 +59,17 @@ public class ManagerController {
 
     @GetMapping("/export/{type}")
     @ResponseBody
-    public void export(HttpServletResponse response,@PathVariable("type") String type) throws IOException {
-        flowService.export(response,type);
+    public void export(HttpServletResponse response, @PathVariable("type") String type) throws IOException {
+        flowService.export(response, type);
     }
 
     @PostMapping("/import")
     @ResponseBody
     public ResultVO importFile(@RequestParam MultipartFile file) throws IOException {
-       return  flowService.importFile(file);
+        return flowService.importFile(file);
     }
 
-    @GetMapping("/execute")
+    @PostMapping("/execute")
     @ResponseBody
     public ResultVO execute(@RequestBody @Valid ParamVO paramVO) {
         return flowService.execute(paramVO);

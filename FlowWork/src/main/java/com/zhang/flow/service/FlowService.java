@@ -26,5 +26,5 @@ public interface FlowService {
 
     ResultVO importFile(MultipartFile file) throws IOException;
 
-    void sortFlow();
+    ResultVO delete(boolean isOrder);
 }

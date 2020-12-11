@@ -5,6 +5,7 @@ import com.alibaba.excel.annotation.ExcelIgnore;
 import com.alibaba.excel.annotation.ExcelProperty;
 import com.alibaba.excel.annotation.write.style.ColumnWidth;
 import com.alibaba.excel.annotation.write.style.HeadStyle;
+import com.alibaba.excel.metadata.BaseRowModel;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -15,6 +16,7 @@ import org.apache.poi.ss.usermodel.FillPatternType;
 
 import java.io.Serializable;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * @author zhang
@@ -23,10 +25,9 @@ import java.util.Map;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@JsonInclude(JsonInclude.Include.NON_NULL)
-@ColumnWidth(50)
+@ColumnWidth(30)
 @HeadStyle(fillPatternType = FillPatternType.SOLID_FOREGROUND, fillForegroundColor = 40)
-public class FlowVO implements Serializable {
+public class FlowExcelVO {
     @ExcelIgnore
     private String id;
     @ExcelProperty("顺序ID")
@@ -40,9 +41,9 @@ public class FlowVO implements Serializable {
     @ExcelProperty("请求类型(ContentType)")
     private String reqContentType;
     @ExcelProperty("请求头")
-    private Map<String, String> headerMap;
+    private String headerMap;
     @ExcelProperty("请求表单参数")
-    private Map<String, String[]> paramMap;
+    private String paramMap;
     @ExcelProperty("请求参数")
     private String queryParam;
     @ExcelProperty("请求body")
@@ -53,19 +54,17 @@ public class FlowVO implements Serializable {
     private String respContentType;
     @ExcelProperty("响应body")
     private String responseBody;
-    @ExcelIgnore
-    private Long time;
 
-    public FlowVO(FlowExcelVO vo) {
+    public FlowExcelVO(FlowVO vo) {
         this.id = vo.getId();
         this.order = vo.getOrder();
         this.url = vo.getUrl();
         this.uri = vo.getUri();
         this.method = vo.getMethod();
         this.reqContentType = vo.getReqContentType();
-        this.headerMap = StringUtils.isBlank(vo.getHeaderMap()) ? null : JSONUtil.toBean(vo.getHeaderMap(), Map.class);
-        this.paramMap = StringUtils.isBlank(vo.getParamMap()) ? null : JSONUtil.toBean(vo.getParamMap(), Map.class);
-        this.queryParam = vo.getQueryParam();
+        this.headerMap = Objects.isNull(vo.getHeaderMap()) || vo.getHeaderMap().isEmpty() ? null : JSONUtil.toJsonStr(vo.getHeaderMap());
+        this.paramMap = Objects.isNull(vo.getParamMap()) || vo.getParamMap().isEmpty() ? null : JSONUtil.toJsonStr(vo.getParamMap());
+        this.queryParam = Objects.isNull(vo.getQueryParam()) || vo.getQueryParam().isEmpty() ? null : JSONUtil.toJsonStr(vo.getQueryParam());
         this.requestBody = vo.getRequestBody();
         this.httpStatus = vo.getHttpStatus();
         this.respContentType = vo.getRespContentType();

@@ -6,9 +6,11 @@ import com.alibaba.excel.support.ExcelTypeEnum;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.zhang.flow.cache.FlowCache;
 import com.zhang.flow.service.FlowService;
+import com.zhang.flow.vo.FlowExcelVO;
 import com.zhang.flow.vo.FlowVO;
 import com.zhang.flow.vo.ParamVO;
 import com.zhang.flow.vo.ResultVO;
+import lombok.extern.slf4j.Slf4j;
 import okhttp3.*;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,12 +23,13 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /**
  * @author zhang
  */
+@Slf4j
 @Service
 public class FlowServiceImpl implements FlowService {
 
@@ -42,31 +45,46 @@ public class FlowServiceImpl implements FlowService {
 
     @Override
     public ResultVO list() {
-        return new ResultVO("200", "success", flowCache.asMap().values());
+        return new ResultVO("200", "success",
+                flowCache.asMap().values().stream().sorted(Comparator.comparing(c -> c.getTime())).collect(Collectors.toList()));
     }
 
     @Override
     public ResultVO order(List<String> ids) {
         Assert.notEmpty(ids, "接口id不能为空");
+        FlowCache.ORDER_FLOW_CACHE.clear();
         for (int i = 0; i < ids.size(); i++) {
             FlowVO vo = flowCache.getIfPresent(ids.get(i));
             if (Objects.nonNull(vo)) {
-                FlowCache.ORDER_FLOW_CACHE.put(Long.valueOf(i), vo);
+                FlowCache.ORDER_FLOW_CACHE.put(vo.getId(), vo);
             }
         }
         return new ResultVO("200", "success", FlowCache.ORDER_FLOW_CACHE.values());
     }
 
     @Override
+    public ResultVO delete(boolean isOrder) {
+        if (isOrder) {
+            FlowCache.ORDER_FLOW_CACHE.clear();
+        } else {
+            flowCache.invalidateAll();
+        }
+        return new ResultVO("200", "success", null);
+    }
+
+    @Override
     public ResultVO start() {
-        flowCache.cleanUp();
+        FlowCache.IS_START = true;
         FlowCache.ORDER_FLOW_CACHE.clear();
+        flowCache.invalidateAll();
         return new ResultVO("200", "success", null);
     }
 
     @Override
     public ResultVO end() {
+        FlowCache.IS_START = false;
         FlowCache.ORDER_FLOW_CACHE.clear();
+        flowCache.invalidateAll();
         return new ResultVO("200", "success", null);
     }
 
@@ -76,29 +94,25 @@ public class FlowServiceImpl implements FlowService {
             response.setContentType("application/vnd.ms-excel");
             response.setCharacterEncoding(StandardCharsets.UTF_8.name());
             response.setHeader("Content-disposition", "attachment;filename*=utf-8''apiFlow.xlsx");
-            List<FlowVO> list = new ArrayList<>();
+            List<FlowExcelVO> list = new ArrayList<>();
             if ("1".equals(type)) {
                 flowCache.asMap().values().forEach(o -> {
-                    list.add(o);
+                    list.add(new FlowExcelVO(o));
                 });
             } else {
                 FlowCache.ORDER_FLOW_CACHE.values().forEach(o -> {
-                    list.add(o);
+                    list.add(new FlowExcelVO(o));
                 });
             }
-            EasyExcel.write(response.getOutputStream(), FlowVO.class).excelType(ExcelTypeEnum.XLSX).sheet(0, "api数据").doWrite(list);
+            EasyExcel.write(response.getOutputStream(), FlowExcelVO.class).excelType(ExcelTypeEnum.XLSX).sheet(0, "api数据").doWrite(list);
         } catch (Exception e) {
             e.printStackTrace();
-            response.reset();
-            response.setContentType("application/json");
-            response.setCharacterEncoding(StandardCharsets.UTF_8.name());
-            response.getWriter().println(new ResultVO("500", "下载文件失败", null));
         }
     }
 
     @Override
     public ResultVO importFile(MultipartFile file) throws IOException {
-        EasyExcel.read(file.getInputStream(), FlowVO.class, new ImportDataListener()).sheet().headRowNumber(1).doRead();
+        EasyExcel.read(file.getInputStream(), FlowExcelVO.class, new ImportDataListener()).sheet().headRowNumber(1).doRead();
         return new ResultVO("200", "success", null);
     }
 
@@ -108,21 +122,28 @@ public class FlowServiceImpl implements FlowService {
             return new ResultVO("500", "可执行的列表为空！", null);
         }
         List<FlowVO> list = new ArrayList<>();
-        try {
-            for (FlowVO vo : FlowCache.ORDER_FLOW_CACHE.values()) {
+        for (FlowVO vo : FlowCache.ORDER_FLOW_CACHE.values()) {
+            if (!paramVO.getIds().contains(vo.getId())) {
+                continue;
+            }
+            Response response = null;
+            try {
+                String path = StringUtils.isBlank(paramVO.getPath()) ? vo.getUrl() : (paramVO.getPath() + vo.getUri());
                 Request request = new Request.Builder()
-                        .url(paramVO.getPath() + vo.getUrl() + (StringUtils.isNotBlank(vo.getQueryParam()) ? vo.getQueryParam() : ""))
+                        .url(path + (StringUtils.isNotBlank(vo.getQueryParam()) ? vo.getQueryParam() : ""))
                         .method(vo.getMethod(), returnRequestBody(vo))
                         .headers(Headers.of(vo.getHeaderMap()))
                         .build();
-                Response response = CLIENT.newCall(request).execute();
+                response = CLIENT.newCall(request).execute();
                 vo.setRespContentType(response.body().contentType().toString());
                 vo.setResponseBody(response.body().string());
                 vo.setHttpStatus(String.valueOf(response.code()));
-                list.add(vo);
+            } catch (Exception e) {
+                log.warn("ID=[{}],URL=[{}],execute error", vo.getId(), vo.getUrl());
+            } finally {
+                response.close();
             }
-        } catch (Exception e) {
-            return new ResultVO("500", "failed", list);
+            list.add(vo);
         }
         return new ResultVO("200", "success", list);
     }
@@ -169,14 +190,5 @@ public class FlowServiceImpl implements FlowService {
             return RequestBody.create(MediaType.parse(vo.getReqContentType()), vo.getRequestBody());
         }
         return null;
-    }
-
-    @Override
-    public void sortFlow() {
-        ConcurrentSkipListMap<Long, FlowVO> map = new ConcurrentSkipListMap<>();
-        FlowCache.ORDER_FLOW_CACHE.entrySet().stream()
-                .sorted(Map.Entry.<Long, FlowVO>comparingByKey()
-                        .reversed()).forEachOrdered(e -> map.put(e.getKey(), e.getValue()));
-        FlowCache.ORDER_FLOW_CACHE = map;
     }
 }

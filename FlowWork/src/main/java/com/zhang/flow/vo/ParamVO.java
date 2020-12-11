@@ -5,7 +5,9 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -15,8 +17,8 @@ import java.util.Map;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ParamVO {
-    @NotNull(message = "请求路径不能为空")
-    @NotBlank(message = "请求路径不能为空")
+    @NotEmpty
+    private List<String> ids;
     private String path;
     private Map<String, String> header;
 }
