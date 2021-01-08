@@ -24,6 +24,7 @@ import java.io.IOException;
 @Order(1)
 @Component
 public class ParamFilter implements Filter {
+    public static final String FLOWZHANG = "/flowzhang";
     @Qualifier("flowCache")
     @Autowired
     Cache<String, FlowVO> flowCache;
@@ -41,29 +42,19 @@ public class ParamFilter implements Filter {
         HttpServletRequest httpServletRequest = (HttpServletRequest) servletRequest;
         HttpServletResponse httpServletResponse = (HttpServletResponse) servletResponse;
         log.info(httpServletRequest.getRequestURI());
-        if (httpServletRequest.getRequestURI().contains("/flowzhang")
+        if (httpServletRequest.getRequestURI().contains(FLOWZHANG)
                 || httpServletRequest.getRequestURI().equals("/")) {
             filterChain.doFilter(httpServletRequest, httpServletResponse);
             return;
         }
         String type = httpServletRequest.getContentType();
-        boolean reqFlag = StringUtils.isNotBlank(type) && (type.contains(MediaType.MULTIPART_FORM_DATA_VALUE)
-                || type.contains(MediaType.APPLICATION_JSON_VALUE)
-                || type.contains(MediaType.APPLICATION_FORM_URLENCODED_VALUE)
-                || type.contains(MediaType.APPLICATION_XML_VALUE)
-                || type.contains(MediaType.TEXT_PLAIN_VALUE)
-                || type.contains(MediaType.TEXT_XML_VALUE));
+        boolean reqFlag = isReqFlag(type);
         if (reqFlag || StringUtils.isBlank(type)) {
             RequestWrapper reqWp = new RequestWrapper(httpServletRequest);
             ResponseWrapper respWp = new ResponseWrapper(httpServletResponse);
             filterChain.doFilter(reqWp, respWp);
             String respType = respWp.getContentType();
-            boolean respFlag = StringUtils.isNotBlank(respType) && (respType.contains(MediaType.MULTIPART_FORM_DATA_VALUE)
-                    || respType.contains(MediaType.APPLICATION_JSON_VALUE)
-                    || respType.contains(MediaType.APPLICATION_FORM_URLENCODED_VALUE)
-                    || respType.contains(MediaType.APPLICATION_XML_VALUE)
-                    || respType.contains(MediaType.TEXT_PLAIN_VALUE)
-                    || respType.contains(MediaType.TEXT_XML_VALUE));
+            boolean respFlag = isReqFlag(respType);
             if (respFlag || StringUtils.isBlank(respType)) {
                 String uuid = IdUtil.simpleUUID();
                 FlowVO flow = FlowVO.builder()
@@ -90,6 +81,15 @@ public class ParamFilter implements Filter {
             }
         }
         filterChain.doFilter(httpServletRequest, httpServletResponse);
+    }
+
+    private boolean isReqFlag(String type) {
+        return StringUtils.isNotBlank(type) && (type.contains(MediaType.MULTIPART_FORM_DATA_VALUE)
+                || type.contains(MediaType.APPLICATION_JSON_VALUE)
+                || type.contains(MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+                || type.contains(MediaType.APPLICATION_XML_VALUE)
+                || type.contains(MediaType.TEXT_PLAIN_VALUE)
+                || type.contains(MediaType.TEXT_XML_VALUE));
     }
 
     @Override

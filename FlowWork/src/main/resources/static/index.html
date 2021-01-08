@@ -2,9 +2,9 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+    <meta content="IE=edge" http-equiv="X-UA-Compatible">
+    <meta content="width=device-width, initial-scale=1, shrink-to-fit=no" name="viewport">
+    <link href="https://unpkg.com/element-ui/lib/theme-chalk/index.css" rel="stylesheet">
     <script src="https://cdn.bootcss.com/vue/2.6.11/vue.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="https://unpkg.com/element-ui/lib/index.js"></script>
@@ -13,21 +13,21 @@
 </head>
 <body>
 <div id="index">
-    <el-backtop target='.topNav' :right='50' :bottom='80' visibility-height='80'>
+    <el-backtop :bottom='80' :right='50' target='.topNav' visibility-height='80'>
         <el-button type="danger">TOP</el-button>
     </el-backtop>
     <el-container>
         <el-header style="margin-top: 2em">
             <el-switch
-                    style="display: block;width: 10em;margin-top: 6px;margin-left: 1em;float: left"
-                    v-model="isStart"
+                    @change='changeStatus'
                     active-color="#13ce66"
-                    inactive-color="#ff4949"
                     active-text="结束"
+                    inactive-color="#ff4949"
                     inactive-text="开始"
-                    @change='changeStatus'>
+                    style="display: block;width: 10em;margin-top: 6px;margin-left: 1em;float: left"
+                    v-model="isStart">
             </el-switch>
-            <el-dropdown trigger="click" @command="batchOperate" style="float: left">
+            <el-dropdown @command="batchOperate" style="float: left" trigger="click">
                 <el-button type="primary">下载</el-button>
                 <el-dropdown-menu slot="dropdown">
                     <el-dropdown-item command="exportFile">下载所有</el-dropdown-item>
@@ -35,13 +35,13 @@
                 </el-dropdown-menu>
             </el-dropdown>
 
-            <el-button type="primary" @click="dialogVisible = true" style="margin-left: 2em;float: left">上传API
+            <el-button @click="dialogVisible = true" style="margin-left: 2em;float: left" type="primary">上传API
             </el-button>
-            <el-button type="primary" @click="startFlow" style="margin-left: 2em;float: left">重新录制
+            <el-button @click="startFlow" style="margin-left: 2em;float: left" type="primary">重新录制
             </el-button>
-            <el-button type="primary" @click="order" style="margin-left: 2em;float: left">1.选中api为测试流程
+            <el-button @click="order" style="margin-left: 2em;float: left" type="primary">1.选中api为测试流程
             </el-button>
-            <el-button type="danger" @click="execute" style="margin-left: 2em;float: left">2.执行
+            <el-button @click="execute" style="margin-left: 2em;float: left" type="danger">2.执行
             </el-button>
 
             <el-input placeholder="请输入请求地址" style="width: 40em;margin-left: 2em;float: left" v-model="requestPath">
@@ -50,90 +50,90 @@
         </el-header>
         <el-main class="topNav">
             <template>
-                <el-button type="primary" plain @click="clearFilter">清除表头过滤器</el-button>
-                <el-button type="primary" plain @click="delAll">清空</el-button>
-                <el-button type="primary" plain @click="refreshTbl">刷新</el-button>
-                <el-table ref="filterTable" row-key="id"
-                          :data="tableData"
-                          :row-class-name="tableRowClassName" style="width: 100%"
-                          @selection-change="tableSelected">
+                <el-button @click="clearFilter" plain type="primary">清除表头过滤器</el-button>
+                <el-button @click="delAll" plain type="primary">清空</el-button>
+                <el-button @click="refreshTbl" plain type="primary">刷新</el-button>
+                <el-table :data="tableData" :row-class-name="tableRowClassName"
+                          @selection-change="tableSelected"
+                          ref="filterTable" row-key="id"
+                          style="width: 100%">
                     <el-table-column
                             type="selection"
                             width="50">
                     </el-table-column>
-                    <el-table-column label="NO" width="60" >
+                    <el-table-column label="NO" width="60">
                         <template slot-scope="scope">
-                            {{scope.$index+1}}
+                            {{scope.$index + 1}}
                         </template>
                     </el-table-column>
                     <!--                   <el-table-column prop="id" label="ID" sortable width="60" :show-overflow-tooltip='true'-->
                     <!--                                     column-key="id"></el-table-column>-->
-                    <el-table-column prop="url" label="URL" sortable width="100" column-key="url"
-                                     :show-overflow-tooltip='true'></el-table-column>
-                    <el-table-column prop="uri" label="URI" :show-overflow-tooltip='true' sortable width="200"
-                                     column-key="uri"></el-table-column>
-                    <el-table-column prop="method" label="方法" sortable width="100" column-key="method"
-                                     :filters="[{ text: 'GET', value: 'GET' },
+                    <el-table-column :show-overflow-tooltip='true' column-key="url" label="URL" prop="url" sortable
+                                     width="100"></el-table-column>
+                    <el-table-column :show-overflow-tooltip='true' column-key="uri" label="URI" prop="uri" sortable
+                                     width="200"></el-table-column>
+                    <el-table-column :filter-method="filterMethod" :filters="[{ text: 'GET', value: 'GET' },
                                      { text: 'POST', value: 'POST' },
                                      { text: 'PUT', value: 'PUT' },
-                                     { text: 'DELETE', value: 'DELETE' }]"
-                                     :filter-method="filterMethod">
+                                     { text: 'DELETE', value: 'DELETE' }]" column-key="method" label="方法" prop="method"
+                                     sortable
+                                     width="100">
                     </el-table-column>
-                    <el-table-column prop="reqContentType" label="请求类型" sortable width="120"
-                                     column-key="reqContentType"></el-table-column>
-                    <el-table-column prop="headerMap" label="请求头" sortable width="120"
-                                     :show-overflow-tooltip='true'
-                                     :formatter="formatterJson"
-                                     column-key="headerMap">
+                    <el-table-column column-key="reqContentType" label="请求类型" prop="reqContentType" sortable
+                                     width="120"></el-table-column>
+                    <el-table-column :formatter="formatterJson" :show-overflow-tooltip='true' column-key="headerMap" label="请求头"
+                                     prop="headerMap"
+                                     sortable
+                                     width="120">
                     </el-table-column>
-                    <el-table-column prop="paramMap" label="表单参数" sortable width="140"
-                                     :formatter="formatterJson"
-                                     :show-overflow-tooltip='true'
-                                     column-key="paramMap"></el-table-column>
-                    <el-table-column prop="queryParam" label="请求参数" sortable width="140"
-                                     :formatter="formatterJson"
-                                     :show-overflow-tooltip='true'
-                                     column-key="queryParam"></el-table-column>
-                    <el-table-column prop="requestBody" label="请求Body" sortable width="180"
-                                     :show-overflow-tooltip='true'
-                                     :formatter="formatterJson"
-                                     column-key="requestBody"></el-table-column>
-                    <el-table-column prop="httpStatus" label="响应码" sortable width="100" column-key="httpStatus"
-                                     :filter-method="filterHttpStatus"
-                                     :filters="[{ text: '200', value: '200' },
+                    <el-table-column :formatter="formatterJson" :show-overflow-tooltip='true' column-key="paramMap" label="表单参数"
+                                     prop="paramMap"
+                                     sortable
+                                     width="140"></el-table-column>
+                    <el-table-column :formatter="formatterJson" :show-overflow-tooltip='true' column-key="queryParam" label="请求参数"
+                                     prop="queryParam"
+                                     sortable
+                                     width="140"></el-table-column>
+                    <el-table-column :formatter="formatterJson" :show-overflow-tooltip='true' column-key="requestBody" label="请求Body"
+                                     prop="requestBody"
+                                     sortable
+                                     width="180"></el-table-column>
+                    <el-table-column :filter-method="filterHttpStatus" :filters="[{ text: '200', value: '200' },
                                      { text: '201', value: '201' },
-                                     { text: '500', value: '500' }]"
-                                     filter-placement="bottom-end">
+                                     { text: '500', value: '500' }]" column-key="httpStatus" filter-placement="bottom-end" label="响应码"
+                                     prop="httpStatus"
+                                     sortable
+                                     width="100">
                         <template slot-scope="scope">
                             <el-tag :type="scope.row.httpStatus < 500 ? 'primary' : 'success'" disable-transitions>
                                 {{scope.row.httpStatus}}
                             </el-tag>
                         </template>
                     </el-table-column>
-                    <el-table-column prop="responseBody" label="响应Body" sortable width="250"
-                                     :show-overflow-tooltip='true'
-                                     :formatter="formatterJson"
-                                     column-key="responseBody"></el-table-column>
-                    <el-table-column prop="respContentType" label="响应类型" sortable width="150"
-                                     column-key="respContentType"></el-table-column>
+                    <el-table-column :formatter="formatterJson" :show-overflow-tooltip='true' column-key="responseBody" label="响应Body"
+                                     prop="responseBody"
+                                     sortable
+                                     width="250"></el-table-column>
+                    <el-table-column column-key="respContentType" label="响应类型" prop="respContentType" sortable
+                                     width="150"></el-table-column>
                 </el-table>
             </template>
         </el-main>
     </el-container>
-    <el-dialog title="上传" :visible.sync="dialogVisible" width="400px">
+    <el-dialog :visible.sync="dialogVisible" title="上传" width="400px">
         <div style="text-align: center;vertical-align: middle">
-            <el-upload class='image-uploader' :multiple='false' :auto-upload='true' list-type='text'
-                       :show-file-list='true'
-                       :before-upload="beforeUpload" :drag='true' action='' :limit="1" :on-exceed="handleExceed"
-                       :http-request="uploadFile">
+            <el-upload :auto-upload='true' :before-upload="beforeUpload" :drag='true' :http-request="uploadFile"
+                       :limit="1"
+                       :multiple='false' :on-exceed="handleExceed" :show-file-list='true' action='' class='image-uploader'
+                       list-type='text'>
                 <i class="el-icon-upload"></i>
                 <div class="el-upload__text">将文件拖到此处，或<em>点击上传</em></div>
                 <div class="el-upload__tip" slot="tip">一次只能上传一个文件，仅限Excel格式，单文件不超过10MB</div>
             </el-upload>
         </div>
-        <span slot="footer" class="dialog-footer">
+        <span class="dialog-footer" slot="footer">
             <el-button @click="dialogVisible = false">取 消</el-button>
-            <el-button type="primary" @click="dialogVisible = false">确 定</el-button>
+            <el-button @click="dialogVisible = false" type="primary">确 定</el-button>
         </span>
     </el-dialog>
 </div>

@@ -5,17 +5,12 @@ import com.alibaba.excel.annotation.ExcelIgnore;
 import com.alibaba.excel.annotation.ExcelProperty;
 import com.alibaba.excel.annotation.write.style.ColumnWidth;
 import com.alibaba.excel.annotation.write.style.HeadStyle;
-import com.alibaba.excel.metadata.BaseRowModel;
-import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.ss.usermodel.FillPatternType;
 
-import java.io.Serializable;
-import java.util.Map;
 import java.util.Objects;
 
 /**

@@ -9,7 +9,6 @@ import com.zhang.flow.vo.FlowExcelVO;
 import com.zhang.flow.vo.FlowVO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 
@@ -17,12 +16,11 @@ import javax.annotation.Resource;
  * @author zhang
  */
 public class ImportDataListener extends AnalysisEventListener<FlowExcelVO> {
-    @Resource
-    private FlowService flowService;
     @Qualifier("flowCache")
     @Autowired
     Cache<String, FlowVO> flowCache;
-
+    @Resource
+    private FlowService flowService;
 
     @Override
     public void invoke(FlowExcelVO flowVO, AnalysisContext analysisContext) {

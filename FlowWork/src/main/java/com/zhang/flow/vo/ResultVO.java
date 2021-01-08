@@ -13,7 +13,7 @@ import java.io.Serializable;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ResultVO<T> implements Serializable {
-   private String code;
+    private String code;
     private String msg;
     private T data;
 }
