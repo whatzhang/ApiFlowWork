@@ -1,1 +1,5 @@
-
+server:
+  port: 8080
+api-flow:
+  enabled: true
+  mapping: /flowing

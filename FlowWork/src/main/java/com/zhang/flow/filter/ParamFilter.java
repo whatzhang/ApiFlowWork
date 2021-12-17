@@ -3,15 +3,15 @@ package com.zhang.flow.filter;
 import cn.hutool.core.util.IdUtil;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.zhang.flow.cache.FlowCache;
+import com.zhang.flow.config.Constant;
 import com.zhang.flow.vo.FlowVO;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.Resource;
 import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -21,13 +21,10 @@ import java.io.IOException;
  * @author zhang
  */
 @Slf4j
-@Order(1)
-@Component
 public class ParamFilter implements Filter {
-    public static final String FLOWZHANG = "/flowzhang";
-    @Qualifier("flowCache")
-    @Autowired
-    Cache<String, FlowVO> flowCache;
+
+    @Resource
+    private Cache<String, FlowVO> flowCache;
 
     @Override
     public void init(FilterConfig filterConfig) {
@@ -42,7 +39,7 @@ public class ParamFilter implements Filter {
         HttpServletRequest httpServletRequest = (HttpServletRequest) servletRequest;
         HttpServletResponse httpServletResponse = (HttpServletResponse) servletResponse;
         log.info(httpServletRequest.getRequestURI());
-        if (httpServletRequest.getRequestURI().contains(FLOWZHANG)
+        if (httpServletRequest.getRequestURI().contains(Constant.FLOW_URI_PREF)
                 || httpServletRequest.getRequestURI().equals("/")) {
             filterChain.doFilter(httpServletRequest, httpServletResponse);
             return;
