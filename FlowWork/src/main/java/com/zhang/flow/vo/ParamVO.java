@@ -4,7 +4,6 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.validation.constraints.NotEmpty;
 import java.util.List;
 import java.util.Map;
 
@@ -15,7 +14,6 @@ import java.util.Map;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ParamVO {
-    @NotEmpty
     private List<String> ids;
     private String path;
     private Map<String, String> header;

@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 
-import javax.validation.constraints.NotBlank;
 import java.util.Collections;
 import java.util.Map;
 
@@ -17,7 +16,6 @@ import java.util.Map;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ApiFlowProperties {
 
-    @NotBlank
     private String endpoint = "/flowing";
 
     @JsonIgnore

@@ -2,7 +2,7 @@ package com.zhang.flow.filter;
 
 import cn.hutool.core.io.IoUtil;
 import cn.hutool.core.util.URLUtil;
-import org.apache.commons.lang3.StringUtils;
+import com.zhang.flow.util.StringUtils;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 

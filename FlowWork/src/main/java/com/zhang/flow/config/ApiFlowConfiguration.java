@@ -12,6 +12,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplicat
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.core.annotation.Order;
 import org.springframework.web.servlet.DispatcherServlet;
 
@@ -25,6 +26,7 @@ import java.util.concurrent.TimeUnit;
 @ConditionalOnClass({DispatcherServlet.class})
 @EnableConfigurationProperties({ApiFlowPropertiesConfiguration.class})
 public class ApiFlowConfiguration {
+    @Primary
     @Bean
     @ConditionalOnProperty(value = "api-flow.enabled", havingValue = "true", matchIfMissing = true)
     ApiFlowController playgroundController(ApiFlowPropertiesConfiguration apiFlowPropertiesConfiguration, final ObjectMapper objectMapper) {
